@@ -1,0 +1,11 @@
+{
+
+  "current_model": "./trained_models/model_5_2019_0730_1230/model.h5",
+  "scaler": "./trained_models/model_5_2019_0730_1230/scaler.dump",
+
+  "preprocessed_inputs_filepath": "./labelled_data/telva_dataset.csv",
+
+  "number_of_timesteps": 50,
+  "number_of_features_for_learning": 3,
+  "number_of_features_to_predict": 1
+}
