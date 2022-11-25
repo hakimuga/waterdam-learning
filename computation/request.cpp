@@ -1,5 +1,5 @@
 
-float compute_wf (float parameter1, float parameter2, float parameter3)
+float compute_wf (float wh, float parameter2, float parameter3)
 CURL *curl;
 CURLcode res;
 
@@ -9,7 +9,7 @@ if(curl)
 {
     int res = 0;
     snprintf(curl_url, sizeof(curl_url), "https://%s:8080/hello", results);
-    snprintf(curl_fields, sizeof(curl_fields),"\"water_volume\":\"%s\", \"rain_precipitation\":\"%s\",   \"water_height\":\"%s\"", water_volume, rain_precipitation, water_height);
+    snprintf(curl_fields, sizeof(curl_fields),"\"water_volume\":\"%s\", \"rain_precipitation\":\"%s\",   \"water_height\":\"%s\"", wh, rp, wv);
 
 
     struct curl_slist *headers = NULL;
