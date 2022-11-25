@@ -1,5 +1,5 @@
 
-float compute_wf (loat parameter1, float parameter2, float parameter3)
+float compute_wf (float parameter1, float parameter2, float parameter3)
 CURL *curl;
 CURLcode res;
 
