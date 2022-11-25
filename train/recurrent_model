@@ -1,0 +1,92 @@
+# Copyright 2019 Siotic Spain, S.L.
+
+
+import numpy as np
+import datetime
+from keras.models import Sequential, load_model
+from keras import layers
+import os
+from utils.dataset_utils import create_dir_if_needed, save_scaler_to
+
+
+def prepare_prediction_dataset(float_data, inputs_configuration, offset):
+    number_lookback_timesteps = inputs_configuration['lstm_parameters']['number_lookback_timesteps']
+    prediction_data = float_data[offset-number_lookback_timesteps:offset, :]
+    prediction_data = np.reshape(prediction_data, (1, prediction_data.shape[0], prediction_data.shape[1]))
+    return prediction_data
+
+
+def build_basic_nn_for_regression(number_of_features, model_config):
+    """A simple NN model, sequential, 1 Flatten layer + activation"""
+    model = Sequential()
+    model.add(
+        layers.Flatten(input_shape=(model_config['input_shape'][0], number_of_features)))
+    model.add(layers.Dense(model_config['units'], activation=model_config['activation']))
+    model.add(layers.Dense(1))
+    model.compile(optimizer=model_config['optimizer'], loss=model_config['loss'])
+    return model
+
+
+def build_recurrent_nn_gru_for_regression(number_of_features, model_config):
+    """Simple recurrent NN, using GRU. Optionally with dropout"""
+    model = Sequential()
+    model.add(layers.GRU(model_config['units'],
+                         dropout=model_config.get('dropout', 0),
+                         recurrent_dropout=model_config.get('dropout', 0),
+                         input_shape=(None, number_of_features)))
+    model.add(layers.Dense(1))
+    model.compile(optimizer=model_config['optimizer'], loss=model_config['loss'])
+    return model
+
+
+def build_recurrent_nn_lstm_for_regression(number_of_features, model_config):
+    """Simple recurrent NN, using LSTM. Optionally with additional layers"""
+    number_of_additional_layers = model_config.get('additional_layers', 0)
+    time_distributed = model_config.get('time_distributed', False)
+    model = Sequential()
+    model.add(layers.LSTM(
+        model_config['units'],
+        input_shape=(model_config.get('input_shape')[0] if model_config.get('input_shape') is not None else None,
+                     number_of_features),
+        return_sequences=True if number_of_additional_layers > 0 else False))
+    for i in range(0, number_of_additional_layers):
+        model.add(layers.LSTM(model_config.get('units'),
+                              input_shape=(model_config.get('input_shape')[0] if model_config.get('input_shape') is not None else None,
+                                           number_of_features)
+                              ))
+    model.add(layers.Dense(1))
+    model.compile(optimizer='rmsprop', loss='mae')
+    return model
+
+
+def build_models(number_of_features, inputs_configuration, fn_to_train = None, scaler = None):
+    models = []
+    model_configurations = inputs_configuration.get('models_to_train', [])
+    for model_configuration in model_configurations:
+        name_for_fn_to_train = model_configuration.get('build_function', None)
+        if name_for_fn_to_train is not None and globals().get(name_for_fn_to_train) is not None:
+            model = globals()[name_for_fn_to_train](number_of_features, model_configuration)
+            if fn_to_train is not None:
+                model = fn_to_train(model, model_configuration['name'])
+                entry_path = save_model(model, inputs_configuration['output_model_path'], model_configuration['name'])
+                if scaler is not None:
+                    save_scaler_to(scaler, os.path.join(entry_path, 'scaler.dump'))
+            models.append(model)
+    return models
+
+
+def load_models(models_to_load_config):
+    models = []
+    for entry in models_to_load_config:
+        model = load_model(entry['path'])
+       
+        if model is not None:
+            models.append(model)
+    return models
+
+
+def save_model(model, base_path, model_name):
+    model_path = base_path + model_name + "_" + datetime.datetime.now().strftime("%Y_%m%d_%H%M")
+    create_dir_if_needed(model_path)
+    model.save(os.path.join(model_path, "model.h5") )
+    return model_path
