@@ -1,5 +1,14 @@
+#include <string>
 
-float compute_wf (float wh, float parameter2, float parameter3)
+
+float compute_wf (float wh, float rp, float wv){
+    
+std::string s_wh= std::to_string(wh);
+std::string s_rp= std::to_string(rp);    
+std::string s_wv= std::to_string(wv);
+
+float num_float;
+        
 CURL *curl;
 CURLcode res;
 
@@ -8,8 +17,8 @@ curl = curl_easy_init();
 if(curl)
 {
     int res = 0;
-    snprintf(curl_url, sizeof(curl_url), "https://%s:8080/hello", results);
-    snprintf(curl_fields, sizeof(curl_fields),"\"water_volume\":\"%s\", \"rain_precipitation\":\"%s\",   \"water_height\":\"%s\"", wh, rp, wv);
+    snprintf(curl_url, sizeof(curl_url), "https://192.168.12.2/hello", results);
+    snprintf(curl_fields, sizeof(curl_fields),"\"water_volume\":\"%s\", \"rain_precipitation\":\"%s\",   \"water_height\":\"%s\"", s_wv, s_rp, s_wh);
 
 
     struct curl_slist *headers = NULL;
@@ -26,11 +35,10 @@ if(curl)
     res = curl_easy_perform(curl);
     std::cout << readBuffer << std::endl;
 
-
-
     curl_easy_cleanup(curl);
     curl_global_cleanup();
-  
+    float num_float = std::stof(str);
 }
+     return num_float;
 
 }
